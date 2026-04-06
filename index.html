@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sale Counter & Profit History</title>
+    <title>Sale Counter - 30 Days Pro</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,7 @@
             padding: 20px;
             touch-action: manipulation;
         }
-        h1 { color: #333; margin-bottom: 25px; }
+        h1 { color: #333; margin-bottom: 20px; font-size: 24px; }
         .container {
             display: flex;
             gap: 15px;
@@ -42,22 +42,33 @@
             transition: transform 0.1s;
         }
         .btn:active { transform: scale(0.95); }
-        
         .btn-s { background-color: #4CAF50; }
         .btn-m { background-color: #FF9800; }
         .btn-l { background-color: #F44336; }
         
         .count-display {
-            font-size: 40px;
+            font-size: 45px;
             font-weight: bold;
-            margin-top: 15px;
+            margin-top: 10px;
             color: #333;
         }
+
+        .minus-btn {
+            margin-top: 10px;
+            width: 60px;
+            height: 40px;
+            background-color: #dee2e6;
+            color: #495057;
+            border: none;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
         
-        /* กล่องสรุปยอด */
         .summary-box {
-            margin-top: 35px;
-            padding: 20px;
+            margin-top: 25px;
+            padding: 15px;
             background-color: #fff;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -68,80 +79,72 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
         }
-        .summary-row:last-child {
-            border-bottom: none; margin-bottom: 0; padding-bottom: 0;
-        }
-        .summary-label {
-            font-size: 22px;
-            font-weight: bold;
-            color: #555;
-        }
-        .revenue-text { font-size: 28px; font-weight: bold; color: #2196F3; }
+        .summary-label { font-size: 18px; font-weight: bold; color: #555; }
+        .revenue-text { font-size: 24px; font-weight: bold; color: #2196F3; }
         
         .expense-input {
-            font-size: 24px;
-            padding: 10px;
-            width: 130px;
+            font-size: 20px;
+            padding: 8px;
+            width: 110px;
             text-align: right;
             border: 2px solid #ccc;
             border-radius: 8px;
             font-weight: bold;
             color: #ff9800;
         }
-        .expense-input:focus { outline: none; border-color: #ff9800; }
 
-        .profit-text { font-size: 36px; font-weight: bold; color: #4CAF50; transition: color 0.3s;}
+        .profit-text { font-size: 28px; font-weight: bold; color: #4CAF50; }
         .profit-negative { color: #F44336; }
 
         .reset-btn {
-            margin-top: 25px;
-            padding: 15px 40px;
-            font-size: 20px;
-            background-color: #555;
+            margin-top: 20px;
+            padding: 15px;
+            font-size: 18px;
+            background-color: #343a40;
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             width: 90%;
             max-width: 500px;
+            font-weight: bold;
         }
 
-        /* กล่องประวัติ 7 วัน */
+        /* ส่วนประวัติ 30 วัน */
         .history-box {
             margin-top: 25px;
-            padding: 20px;
+            padding: 15px;
             background-color: #fff;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             width: 90%;
             max-width: 500px;
         }
-        .history-box h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #333;
-            text-align: center;
-            font-size: 20px;
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .history-scroll {
+            max-height: 300px; /* จำกัดความสูงตาราง */
+            overflow-y: auto; /* เลื่อนขึ้นลงได้ */
         }
-        th, td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; font-size: 16px; }
+        .total-30-days {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px dashed #eee;
+            text-align: right;
             font-size: 18px;
+            font-weight: bold;
+            color: #333;
         }
-        th { background-color: #f1f1f1; color: #555; }
-        td:first-child { text-align: left; }
-        td:last-child { text-align: right; font-weight: bold; }
-        .no-data { text-align: center !important; color: #999; font-weight: normal !important; }
-
     </style>
 </head>
 <body>
@@ -152,48 +155,56 @@
         <div class="counter-box">
             <button class="btn btn-s" onclick="addSale('S')">S</button>
             <div class="count-display" id="count-S">0</div>
+            <button class="minus-btn" onclick="subtractSale('S')">-</button>
         </div>
         <div class="counter-box">
             <button class="btn btn-m" onclick="addSale('M')">M</button>
             <div class="count-display" id="count-M">0</div>
+            <button class="minus-btn" onclick="subtractSale('M')">-</button>
         </div>
         <div class="counter-box">
             <button class="btn btn-l" onclick="addSale('L')">L</button>
             <div class="count-display" id="count-L">0</div>
+            <button class="minus-btn" onclick="subtractSale('L')">-</button>
         </div>
     </div>
 
     <div class="summary-box">
         <div class="summary-row">
             <span class="summary-label">รายรับ:</span>
-            <div><span class="revenue-text" id="total-revenue">0</span><span style="font-size:18px; color:#666;"> ฿</span></div>
+            <div><span class="revenue-text" id="total-revenue">0</span> ฿</div>
         </div>
         <div class="summary-row">
-            <span class="summary-label">รายจ่าย (ต้นทุน):</span>
-            <div>
-                <input type="number" class="expense-input" id="expense-input" placeholder="0" oninput="calculateProfit()">
-            </div>
+            <span class="summary-label">ต้นทุน:</span>
+            <input type="number" class="expense-input" id="expense-input" placeholder="0" oninput="calculateProfit()">
         </div>
         <div class="summary-row">
             <span class="summary-label">กำไรสุทธิ:</span>
-            <div><span class="profit-text" id="net-profit">0</span><span style="font-size:18px; color:#666;"> ฿</span></div>
+            <div><span class="profit-text" id="net-profit">0</span> ฿</div>
         </div>
     </div>
 
     <button class="reset-btn" onclick="resetCounts()">สรุปยอดและเริ่มวันใหม่</button>
 
     <div class="history-box">
-        <h3>สถิติกำไร 7 วันล่าสุด</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th style="text-align: left;">วันที่</th>
-                    <th style="text-align: right;">กำไรสุทธิ (฿)</th>
-                </tr>
-            </thead>
-            <tbody id="history-body">
-                </tbody>
-        </table>
+        <div class="history-header">
+            <span style="font-weight:bold; color:#555;">ประวัติ 30 วันล่าสุด</span>
+            <button onclick="clearHistory()" style="font-size:12px; color:red; border:none; background:none;">ล้างประวัติทั้งหมด</button>
+        </div>
+        <div class="history-scroll">
+            <table>
+                <thead>
+                    <tr style="background:#f9f9f9;">
+                        <th style="text-align: left;">วันที่</th>
+                        <th style="text-align: right;">กำไร (฿)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+            </table>
+        </div>
+        <div class="total-30-days">
+            กำไรสะสมในตาราง: <span id="accumulated-profit" style="color:#2196F3;">0</span> ฿
+        </div>
     </div>
 
     <script>
@@ -206,115 +217,94 @@
                     counts[size] = parseInt(localStorage.getItem('sale_' + size)) || 0;
                     document.getElementById('count-' + size).innerText = counts[size];
                 });
-                
-                let savedExpense = localStorage.getItem('daily_expense') || "";
-                document.getElementById('expense-input').value = savedExpense;
-
+                document.getElementById('expense-input').value = localStorage.getItem('daily_expense') || "";
                 calculateProfit(); 
-                renderHistory(); // โหลดตารางประวัติ
-            } catch(e) {
-                console.warn("ไม่สามารถดึงข้อมูลที่บันทึกไว้ได้");
-            }
+                renderHistory();
+            } catch(e) {}
         };
 
         function addSale(size) {
             counts[size]++; 
-            document.getElementById('count-' + size).innerText = counts[size]; 
-            calculateProfit(); 
+            updateDisplay(size);
+        }
 
-            try {
-                localStorage.setItem('sale_' + size, counts[size]);
-            } catch(e) {}
+        function subtractSale(size) {
+            if (counts[size] > 0) {
+                counts[size]--;
+                updateDisplay(size);
+            }
+        }
+
+        function updateDisplay(size) {
+            document.getElementById('count-' + size).innerText = counts[size];
+            calculateProfit();
+            try { localStorage.setItem('sale_' + size, counts[size]); } catch(e) {}
         }
 
         function calculateProfit() {
             let revenue = (counts['S'] * prices['S']) + (counts['M'] * prices['M']) + (counts['L'] * prices['L']);
             document.getElementById('total-revenue').innerText = revenue.toLocaleString('th-TH');
 
-            let expenseInput = document.getElementById('expense-input').value;
-            let expense = parseInt(expenseInput) || 0;
-
-            try { localStorage.setItem('daily_expense', expenseInput); } catch(e) {}
+            let expense = parseInt(document.getElementById('expense-input').value) || 0;
+            try { localStorage.setItem('daily_expense', document.getElementById('expense-input').value); } catch(e) {}
 
             let profit = revenue - expense;
-            let profitDisplay = document.getElementById('net-profit');
-            
-            profitDisplay.innerText = profit.toLocaleString('th-TH');
-
-            if (profit < 0) {
-                profitDisplay.classList.add('profit-negative'); 
-            } else {
-                profitDisplay.classList.remove('profit-negative'); 
-            }
-            return profit; // ส่งค่ากำไรกลับไปใช้ตอนบันทึกประวัติ
+            let display = document.getElementById('net-profit');
+            display.innerText = profit.toLocaleString('th-TH');
+            display.className = profit < 0 ? 'profit-text profit-negative' : 'profit-text';
+            return profit;
         }
 
-        // ฟังก์ชันแสดงตารางประวัติ
         function renderHistory() {
             let history = JSON.parse(localStorage.getItem('profit_history')) || [];
             let tbody = document.getElementById('history-body');
-            tbody.innerHTML = '';
+            let accumulatedDisplay = document.getElementById('accumulated-profit');
             
-            if(history.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" class="no-data">ยังไม่มีข้อมูลการขาย</td></tr>';
-                return;
-            }
-
+            tbody.innerHTML = history.length ? '' : '<tr><td colspan="2" style="color:#999; padding:20px;">ยังไม่มีข้อมูลบันทึก</td></tr>';
+            
+            let totalAccumulated = 0;
             history.forEach(record => {
-                let color = record.profit >= 0 ? '#4CAF50' : '#F44336';
-                let sign = record.profit > 0 ? '+' : '';
-                let row = `<tr>
-                    <td>${record.date}</td>
-                    <td style="color: ${color};">${sign}${record.profit.toLocaleString('th-TH')}</td>
-                </tr>`;
-                tbody.innerHTML += row;
+                totalAccumulated += record.profit;
+                tbody.innerHTML += `<tr><td style="text-align:left;">${record.date}</td><td style="text-align:right; font-weight:bold; color:${record.profit >= 0 ? '#4CAF50' : '#F44336'}">${record.profit.toLocaleString()}</td></tr>`;
             });
-        }
 
-        // ฟังก์ชันบันทึกประวัติ
-        function saveToHistory(profit) {
-            let history = JSON.parse(localStorage.getItem('profit_history')) || [];
-            
-            // หาวันที่ปัจจุบัน แบบย่อ (เช่น 7 เม.ย.)
-            let today = new Date();
-            let dateStr = today.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-            
-            if (history.length > 0 && history[0].date === dateStr) {
-                // ถ้าเป็นวันเดียวกัน อัปเดตยอดไปเลย
-                history[0].profit = profit;
-            } else {
-                // ถ้าเป็นวันใหม่ แทรกไปบรรทัดบนสุด
-                history.unshift({ date: dateStr, profit: profit });
-            }
-
-            // เก็บแค่ 7 วัน
-            if (history.length > 7) {
-                history.pop(); 
-            }
-            
-            localStorage.setItem('profit_history', JSON.stringify(history));
-            renderHistory();
+            accumulatedDisplay.innerText = totalAccumulated.toLocaleString('th-TH');
         }
 
         function resetCounts() {
-            // ก่อนรีเซ็ต ให้บันทึกยอดลงตารางก่อน
-            let currentProfit = calculateProfit();
-
-            if(confirm('ต้องการสรุปยอดของวันนี้ แล้วเริ่มวันใหม่ใช่หรือไม่?\n(ยอดกำไรจะถูกบันทึกลงตารางด้านล่าง)')) {
+            let profit = calculateProfit();
+            if(confirm('สรุปยอดวันนี้และเริ่มวันใหม่?')) {
+                let history = JSON.parse(localStorage.getItem('profit_history')) || [];
+                let today = new Date();
+                let dateStr = today.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
                 
-                saveToHistory(currentProfit); // บันทึกลงประวัติ
+                // ถ้าเป็นวันเดียวกัน ให้บวกยอดทับไป (กรณีเผลอกดจบวันหลายรอบ)
+                if (history.length > 0 && history[0].date === dateStr) {
+                    history[0].profit = profit;
+                } else {
+                    history.unshift({ date: dateStr, profit: profit });
+                }
 
-                // เคลียร์ยอดบนหน้าจอ
+                // เก็บประวัติสูงสุด 30 วัน
+                if (history.length > 30) history.pop();
+                
+                localStorage.setItem('profit_history', JSON.stringify(history));
+
                 ['S', 'M', 'L'].forEach(size => {
                     counts[size] = 0;
-                    document.getElementById('count-' + size).innerText = 0;
-                    try { localStorage.setItem('sale_' + size, 0); } catch(e) {}
+                    updateDisplay(size);
                 });
-                
                 document.getElementById('expense-input').value = "";
-                try { localStorage.setItem('daily_expense', ""); } catch(e) {}
+                localStorage.setItem('daily_expense', "");
+                renderHistory();
+                window.scrollTo(0,0); // เลื่อนกลับไปด้านบน
+            }
+        }
 
-                calculateProfit(); 
+        function clearHistory() {
+            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบประวัติ 30 วันทั้งหมด?')) {
+                localStorage.removeItem('profit_history');
+                renderHistory();
             }
         }
     </script>
