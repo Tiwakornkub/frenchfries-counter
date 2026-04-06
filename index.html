@@ -15,10 +15,10 @@
             padding: 20px;
             touch-action: manipulation;
         }
-        h1 { color: #333; margin-bottom: 40px; }
+        h1 { color: #333; margin-bottom: 30px; }
         .container {
             display: flex;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             max-width: 800px;
             justify-content: space-around;
@@ -32,7 +32,7 @@
         .btn {
             width: 100%;
             aspect-ratio: 1 / 1;
-            font-size: 60px;
+            font-size: 50px;
             font-weight: bold;
             color: white;
             border: none;
@@ -48,15 +48,42 @@
         .btn-l { background-color: #F44336; }
         
         .count-display {
-            font-size: 50px;
+            font-size: 40px;
             font-weight: bold;
-            margin-top: 20px;
+            margin-top: 15px;
             color: #333;
         }
-        .reset-btn {
-            margin-top: 60px;
-            padding: 15px 40px;
+        
+        /* ส่วนที่เพิ่มมาใหม่สำหรับแสดงยอดเงิน */
+        .total-box {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+        .total-title {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .total-amount {
+            font-size: 45px;
+            font-weight: bold;
+            color: #2196F3; /* สีฟ้า */
+        }
+        .baht-text {
             font-size: 24px;
+            color: #666;
+        }
+
+        .reset-btn {
+            margin-top: 40px;
+            padding: 15px 40px;
+            font-size: 20px;
             background-color: #555;
             color: white;
             border: none;
@@ -71,24 +98,32 @@
 
     <div class="container">
         <div class="counter-box">
-            <button class="btn btn-s" onclick="addSale('S')">S</button>
+            <button class="btn btn-s" onclick="addSale('S')">S<br><span style="font-size: 20px;">39฿</span></button>
             <div class="count-display" id="count-S">0</div>
         </div>
         <div class="counter-box">
-            <button class="btn btn-m" onclick="addSale('M')">M</button>
+            <button class="btn btn-m" onclick="addSale('M')">M<br><span style="font-size: 20px;">49฿</span></button>
             <div class="count-display" id="count-M">0</div>
         </div>
         <div class="counter-box">
-            <button class="btn btn-l" onclick="addSale('L')">L</button>
+            <button class="btn btn-l" onclick="addSale('L')">L<br><span style="font-size: 20px;">59฿</span></button>
             <div class="count-display" id="count-L">0</div>
+        </div>
+    </div>
+
+    <div class="total-box">
+        <div class="total-title">รายรับวันนี้</div>
+        <div>
+            <span class="total-amount" id="total-revenue">0</span>
+            <span class="baht-text"> บาท</span>
         </div>
     </div>
 
     <button class="reset-btn" onclick="resetCounts()">รีเซ็ตยอดรายวัน</button>
 
     <script>
-        // ใช้ตัวแปรธรรมดาเก็บข้อมูลแทน เผื่อ localStorage โดนบล็อก
         let counts = { 'S': 0, 'M': 0, 'L': 0 };
+        const prices = { 'S': 39, 'M': 49, 'L': 59 }; // ราคาของแต่ละไซส์
 
         window.onload = function() {
             try {
@@ -96,19 +131,27 @@
                     counts[size] = parseInt(localStorage.getItem('sale_' + size)) || 0;
                     document.getElementById('count-' + size).innerText = counts[size];
                 });
+                updateTotal(); // คำนวณยอดเงินตอนเปิดแอป
             } catch(e) {
-                console.warn("ไม่สามารถดึงข้อมูลที่บันทึกไว้ได้เนื่องจากข้อจำกัดของเบราว์เซอร์");
+                console.warn("ไม่สามารถดึงข้อมูลที่บันทึกไว้ได้");
             }
         };
 
         function addSale(size) {
-            counts[size]++; // บวกเลขในตัวแปร
-            document.getElementById('count-' + size).innerText = counts[size]; // อัปเดตหน้าจอ
-            
-            // พยายามบันทึกลงเครื่อง ถ้าโดนบล็อกก็จะข้ามไปโดยที่หน้าจอยังนับเลขต่อ
+            counts[size]++; 
+            document.getElementById('count-' + size).innerText = counts[size]; 
+            updateTotal(); // อัปเดตยอดเงินทุกครั้งที่กด
+
             try {
                 localStorage.setItem('sale_' + size, counts[size]);
             } catch(e) {}
+        }
+
+        // ฟังก์ชันคำนวณยอดเงินรวม
+        function updateTotal() {
+            let total = (counts['S'] * prices['S']) + (counts['M'] * prices['M']) + (counts['L'] * prices['L']);
+            // ใส่ลูกน้ำ (comma) ให้ตัวเลขดูง่ายขึ้น
+            document.getElementById('total-revenue').innerText = total.toLocaleString('th-TH');
         }
 
         function resetCounts() {
@@ -120,6 +163,7 @@
                         localStorage.setItem('sale_' + size, 0);
                     } catch(e) {}
                 });
+                updateTotal(); // รีเซ็ตยอดเงินเป็น 0
             }
         }
     </script>
