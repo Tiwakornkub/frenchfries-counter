@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sale Counter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+        }
+        h1 { color: #333; margin-bottom: 40px; }
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 800px;
+            justify-content: space-around;
+        }
+        .counter-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .btn {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.95); }
+        
+        .btn-s { background-color: #4CAF50; }
+        .btn-m { background-color: #FF9800; }
+        .btn-l { background-color: #F44336; }
+        
+        .count-display {
+            font-size: 50px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #333;
+        }
+        .reset-btn {
+            margin-top: 60px;
+            padding: 15px 40px;
+            font-size: 24px;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ระบบนับยอดขาย</h1>
+
+    <div class="container">
+        <div class="counter-box">
+            <button class="btn btn-s" onclick="addSale('S')">S</button>
+            <div class="count-display" id="count-S">0</div>
+        </div>
+        <div class="counter-box">
+            <button class="btn btn-m" onclick="addSale('M')">M</button>
+            <div class="count-display" id="count-M">0</div>
+        </div>
+        <div class="counter-box">
+            <button class="btn btn-l" onclick="addSale('L')">L</button>
+            <div class="count-display" id="count-L">0</div>
+        </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetCounts()">รีเซ็ตยอดรายวัน</button>
+
+    <script>
+        // ใช้ตัวแปรธรรมดาเก็บข้อมูลแทน เผื่อ localStorage โดนบล็อก
+        let counts = { 'S': 0, 'M': 0, 'L': 0 };
+
+        window.onload = function() {
+            try {
+                ['S', 'M', 'L'].forEach(size => {
+                    counts[size] = parseInt(localStorage.getItem('sale_' + size)) || 0;
+                    document.getElementById('count-' + size).innerText = counts[size];
+                });
+            } catch(e) {
+                console.warn("ไม่สามารถดึงข้อมูลที่บันทึกไว้ได้เนื่องจากข้อจำกัดของเบราว์เซอร์");
+            }
+        };
+
+        function addSale(size) {
+            counts[size]++; // บวกเลขในตัวแปร
+            document.getElementById('count-' + size).innerText = counts[size]; // อัปเดตหน้าจอ
+            
+            // พยายามบันทึกลงเครื่อง ถ้าโดนบล็อกก็จะข้ามไปโดยที่หน้าจอยังนับเลขต่อ
+            try {
+                localStorage.setItem('sale_' + size, counts[size]);
+            } catch(e) {}
+        }
+
+        function resetCounts() {
+            if(confirm('ต้องการรีเซ็ตยอดขายทั้งหมดเป็น 0 ใช่หรือไม่?')) {
+                ['S', 'M', 'L'].forEach(size => {
+                    counts[size] = 0;
+                    document.getElementById('count-' + size).innerText = 0;
+                    try {
+                        localStorage.setItem('sale_' + size, 0);
+                    } catch(e) {}
+                });
+            }
+        }
+    </script>
+</body>
+</html>
