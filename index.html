@@ -213,7 +213,7 @@
             </table>
         </div>
         <div class="total-30-days">
-            กำไรสะสมในตาราง: <span id="accumulated-profit" style="color:#2196F3;">0</span> ฿
+            กำไรเดือนนี้: <span id="accumulated-profit" style="color:#2196F3;">0</span> ฿
         </div>
     </div>
 
@@ -272,9 +272,16 @@
             
             tbody.innerHTML = history.length ? '' : '<tr><td colspan="3" style="color:#999; padding:20px;">ยังไม่มีข้อมูลบันทึก</td></tr>';
             
-            let totalAccumulated = 0;
+            // หาชื่อเดือนปัจจุบัน (แบบย่อ เช่น "เม.ย.")
+            let currentMonth = new Date().toLocaleDateString('th-TH', { month: 'short' });
+            let thisMonthProfit = 0;
+
             history.forEach((record, index) => {
-                totalAccumulated += record.profit;
+                // เช็คว่าวันที่ในตาราง มีคำของเดือนนี้อยู่ไหม ถ้ามีให้บวกเพิ่ม
+                if (record.date.includes(currentMonth)) {
+                    thisMonthProfit += record.profit;
+                }
+
                 tbody.innerHTML += `<tr>
                     <td style="text-align:left;">${record.date}</td>
                     <td style="text-align:right; font-weight:bold; color:${record.profit >= 0 ? '#4CAF50' : '#F44336'}">${record.profit.toLocaleString()}</td>
@@ -282,15 +289,15 @@
                 </tr>`;
             });
 
-            accumulatedDisplay.innerText = totalAccumulated.toLocaleString('th-TH');
+            accumulatedDisplay.innerText = thisMonthProfit.toLocaleString('th-TH');
         }
 
         function deleteSpecificRecord(index) {
-            if(confirm('ต้องการลบประวัติของวันนี้ใช่หรือไม่? (ยอดกำไรสะสมจะเปลี่ยนตาม)')) {
+            if(confirm('ต้องการลบประวัติของวันนี้ใช่หรือไม่? (ยอดกำไรเดือนนี้จะเปลี่ยนตาม)')) {
                 let history = JSON.parse(localStorage.getItem('profit_history')) || [];
-                history.splice(index, 1); // ลบข้อมูลเฉพาะตำแหน่งที่กด
+                history.splice(index, 1);
                 localStorage.setItem('profit_history', JSON.stringify(history));
-                renderHistory(); // อัปเดตตารางใหม่ทันที
+                renderHistory(); 
             }
         }
 
