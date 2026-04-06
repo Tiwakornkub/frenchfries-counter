@@ -131,11 +131,20 @@
             padding-bottom: 10px;
         }
         .history-scroll {
-            max-height: 300px; /* จำกัดความสูงตาราง */
-            overflow-y: auto; /* เลื่อนขึ้นลงได้ */
+            max-height: 300px;
+            overflow-y: auto;
         }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; font-size: 16px; }
+        .delete-btn {
+            color: #F44336;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 5px;
+            font-weight: bold;
+        }
         .total-30-days {
             margin-top: 10px;
             padding-top: 10px;
@@ -175,7 +184,7 @@
             <div><span class="revenue-text" id="total-revenue">0</span> ฿</div>
         </div>
         <div class="summary-row">
-            <span class="summary-label">ต้นทุน:</span>
+            <span class="summary-label">รายจ่าย:</span>
             <input type="number" class="expense-input" id="expense-input" placeholder="0" oninput="calculateProfit()">
         </div>
         <div class="summary-row">
@@ -189,7 +198,7 @@
     <div class="history-box">
         <div class="history-header">
             <span style="font-weight:bold; color:#555;">ประวัติ 30 วันล่าสุด</span>
-            <button onclick="clearHistory()" style="font-size:12px; color:red; border:none; background:none;">ล้างประวัติทั้งหมด</button>
+            <button onclick="clearHistory()" style="font-size:12px; color:#999; border:none; background:none;">ล้างทั้งหมด</button>
         </div>
         <div class="history-scroll">
             <table>
@@ -197,6 +206,7 @@
                     <tr style="background:#f9f9f9;">
                         <th style="text-align: left;">วันที่</th>
                         <th style="text-align: right;">กำไร (฿)</th>
+                        <th style="width: 30px;"></th>
                     </tr>
                 </thead>
                 <tbody id="history-body"></tbody>
@@ -260,15 +270,28 @@
             let tbody = document.getElementById('history-body');
             let accumulatedDisplay = document.getElementById('accumulated-profit');
             
-            tbody.innerHTML = history.length ? '' : '<tr><td colspan="2" style="color:#999; padding:20px;">ยังไม่มีข้อมูลบันทึก</td></tr>';
+            tbody.innerHTML = history.length ? '' : '<tr><td colspan="3" style="color:#999; padding:20px;">ยังไม่มีข้อมูลบันทึก</td></tr>';
             
             let totalAccumulated = 0;
-            history.forEach(record => {
+            history.forEach((record, index) => {
                 totalAccumulated += record.profit;
-                tbody.innerHTML += `<tr><td style="text-align:left;">${record.date}</td><td style="text-align:right; font-weight:bold; color:${record.profit >= 0 ? '#4CAF50' : '#F44336'}">${record.profit.toLocaleString()}</td></tr>`;
+                tbody.innerHTML += `<tr>
+                    <td style="text-align:left;">${record.date}</td>
+                    <td style="text-align:right; font-weight:bold; color:${record.profit >= 0 ? '#4CAF50' : '#F44336'}">${record.profit.toLocaleString()}</td>
+                    <td><button class="delete-btn" onclick="deleteSpecificRecord(${index})">&times;</button></td>
+                </tr>`;
             });
 
             accumulatedDisplay.innerText = totalAccumulated.toLocaleString('th-TH');
+        }
+
+        function deleteSpecificRecord(index) {
+            if(confirm('ต้องการลบประวัติของวันนี้ใช่หรือไม่? (ยอดกำไรสะสมจะเปลี่ยนตาม)')) {
+                let history = JSON.parse(localStorage.getItem('profit_history')) || [];
+                history.splice(index, 1); // ลบข้อมูลเฉพาะตำแหน่งที่กด
+                localStorage.setItem('profit_history', JSON.stringify(history));
+                renderHistory(); // อัปเดตตารางใหม่ทันที
+            }
         }
 
         function resetCounts() {
@@ -278,14 +301,12 @@
                 let today = new Date();
                 let dateStr = today.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
                 
-                // ถ้าเป็นวันเดียวกัน ให้บวกยอดทับไป (กรณีเผลอกดจบวันหลายรอบ)
                 if (history.length > 0 && history[0].date === dateStr) {
                     history[0].profit = profit;
                 } else {
                     history.unshift({ date: dateStr, profit: profit });
                 }
 
-                // เก็บประวัติสูงสุด 30 วัน
                 if (history.length > 30) history.pop();
                 
                 localStorage.setItem('profit_history', JSON.stringify(history));
@@ -297,12 +318,12 @@
                 document.getElementById('expense-input').value = "";
                 localStorage.setItem('daily_expense', "");
                 renderHistory();
-                window.scrollTo(0,0); // เลื่อนกลับไปด้านบน
+                window.scrollTo(0,0);
             }
         }
 
         function clearHistory() {
-            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบประวัติ 30 วันทั้งหมด?')) {
+            if(confirm('คุณแน่ใจหรือไม่ว่าต้องการลบประวัติ 30 วันทั้งหมดจริงๆ?')) {
                 localStorage.removeItem('profit_history');
                 renderHistory();
             }
