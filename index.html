@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sale Counter</title>
+    <title>Sale Counter & Profit</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,7 @@
             padding: 20px;
             touch-action: manipulation;
         }
-        h1 { color: #333; margin-bottom: 30px; }
+        h1 { color: #333; margin-bottom: 25px; }
         .container {
             display: flex;
             gap: 15px;
@@ -54,34 +54,52 @@
             color: #333;
         }
         
-        /* ส่วนที่เพิ่มมาใหม่สำหรับแสดงยอดเงิน */
-        .total-box {
-            margin-top: 40px;
-            padding: 20px 40px;
+        /* กล่องสรุปยอด */
+        .summary-box {
+            margin-top: 35px;
+            padding: 20px;
             background-color: #fff;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 80%;
-            max-width: 400px;
+            width: 90%;
+            max-width: 500px;
         }
-        .total-title {
-            font-size: 20px;
-            color: #666;
-            margin-bottom: 10px;
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
-        .total-amount {
-            font-size: 45px;
+        .summary-row:last-child {
+            border-bottom: none; margin-bottom: 0; padding-bottom: 0;
+        }
+        .summary-label {
+            font-size: 22px;
             font-weight: bold;
-            color: #2196F3; /* สีฟ้า */
+            color: #555;
         }
-        .baht-text {
+        .revenue-text { font-size: 28px; font-weight: bold; color: #2196F3; } /* สีฟ้า */
+        
+        /* ช่องกรอกรายจ่าย */
+        .expense-input {
             font-size: 24px;
-            color: #666;
+            padding: 10px;
+            width: 130px;
+            text-align: right;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #ff9800;
         }
+        .expense-input:focus { outline: none; border-color: #ff9800; }
+
+        .profit-text { font-size: 36px; font-weight: bold; color: #4CAF50; transition: color 0.3s;} /* สีเขียว */
+        .profit-negative { color: #F44336; } /* สีแดงถ้าขาดทุน */
 
         .reset-btn {
-            margin-top: 40px;
+            margin-top: 35px;
             padding: 15px 40px;
             font-size: 20px;
             background-color: #555;
@@ -111,27 +129,42 @@
         </div>
     </div>
 
-    <div class="total-box">
-        <div class="total-title">รายรับวันนี้</div>
-        <div>
-            <span class="total-amount" id="total-revenue">0</span>
-            <span class="baht-text"> บาท</span>
+    <div class="summary-box">
+        <div class="summary-row">
+            <span class="summary-label">รายรับ:</span>
+            <div><span class="revenue-text" id="total-revenue">0</span><span style="font-size:18px; color:#666;"> ฿</span></div>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">รายจ่าย (ต้นทุน):</span>
+            <div>
+                <input type="number" class="expense-input" id="expense-input" placeholder="0" oninput="calculateProfit()">
+            </div>
+        </div>
+        <div class="summary-row">
+            <span class="summary-label">กำไรสุทธิ:</span>
+            <div><span class="profit-text" id="net-profit">0</span><span style="font-size:18px; color:#666;"> ฿</span></div>
         </div>
     </div>
 
-    <button class="reset-btn" onclick="resetCounts()">รีเซ็ตยอดรายวัน</button>
+    <button class="reset-btn" onclick="resetCounts()">เริ่มวันใหม่ (รีเซ็ตทั้งหมด)</button>
 
     <script>
         let counts = { 'S': 0, 'M': 0, 'L': 0 };
-        const prices = { 'S': 39, 'M': 49, 'L': 59 }; // ราคาของแต่ละไซส์
+        const prices = { 'S': 39, 'M': 49, 'L': 59 };
 
         window.onload = function() {
             try {
+                // โหลดจำนวนที่นับไว้
                 ['S', 'M', 'L'].forEach(size => {
                     counts[size] = parseInt(localStorage.getItem('sale_' + size)) || 0;
                     document.getElementById('count-' + size).innerText = counts[size];
                 });
-                updateTotal(); // คำนวณยอดเงินตอนเปิดแอป
+                
+                // โหลดรายจ่ายที่เคยกรอกไว้
+                let savedExpense = localStorage.getItem('daily_expense') || "";
+                document.getElementById('expense-input').value = savedExpense;
+
+                calculateProfit(); // คำนวณกำไรตอนเปิดแอป
             } catch(e) {
                 console.warn("ไม่สามารถดึงข้อมูลที่บันทึกไว้ได้");
             }
@@ -140,30 +173,53 @@
         function addSale(size) {
             counts[size]++; 
             document.getElementById('count-' + size).innerText = counts[size]; 
-            updateTotal(); // อัปเดตยอดเงินทุกครั้งที่กด
+            calculateProfit(); // อัปเดตยอดเงินทุกครั้งที่กด
 
             try {
                 localStorage.setItem('sale_' + size, counts[size]);
             } catch(e) {}
         }
 
-        // ฟังก์ชันคำนวณยอดเงินรวม
-        function updateTotal() {
-            let total = (counts['S'] * prices['S']) + (counts['M'] * prices['M']) + (counts['L'] * prices['L']);
-            // ใส่ลูกน้ำ (comma) ให้ตัวเลขดูง่ายขึ้น
-            document.getElementById('total-revenue').innerText = total.toLocaleString('th-TH');
+        // ฟังก์ชันคำนวณรายรับและกำไร
+        function calculateProfit() {
+            // 1. คำนวณรายรับรวม
+            let revenue = (counts['S'] * prices['S']) + (counts['M'] * prices['M']) + (counts['L'] * prices['L']);
+            document.getElementById('total-revenue').innerText = revenue.toLocaleString('th-TH');
+
+            // 2. ดึงค่ารายจ่ายจากช่องกรอก
+            let expenseInput = document.getElementById('expense-input').value;
+            let expense = parseInt(expenseInput) || 0;
+
+            // บันทึกรายจ่ายเผื่อรีเฟรชหน้าเว็บ
+            try { localStorage.setItem('daily_expense', expenseInput); } catch(e) {}
+
+            // 3. คำนวณกำไร (รายรับ - รายจ่าย)
+            let profit = revenue - expense;
+            let profitDisplay = document.getElementById('net-profit');
+            
+            profitDisplay.innerText = profit.toLocaleString('th-TH');
+
+            // เปลี่ยนสีตามกำไร/ขาดทุน
+            if (profit < 0) {
+                profitDisplay.classList.add('profit-negative'); // สีแดง
+            } else {
+                profitDisplay.classList.remove('profit-negative'); // สีเขียว
+            }
         }
 
         function resetCounts() {
-            if(confirm('ต้องการรีเซ็ตยอดขายทั้งหมดเป็น 0 ใช่หรือไม่?')) {
+            if(confirm('ต้องการเริ่มวันใหม่ รีเซ็ตยอดขายและรายจ่ายทั้งหมดเป็น 0 ใช่หรือไม่?')) {
                 ['S', 'M', 'L'].forEach(size => {
                     counts[size] = 0;
                     document.getElementById('count-' + size).innerText = 0;
-                    try {
-                        localStorage.setItem('sale_' + size, 0);
-                    } catch(e) {}
+                    try { localStorage.setItem('sale_' + size, 0); } catch(e) {}
                 });
-                updateTotal(); // รีเซ็ตยอดเงินเป็น 0
+                
+                // รีเซ็ตช่องรายจ่าย
+                document.getElementById('expense-input').value = "";
+                try { localStorage.setItem('daily_expense', ""); } catch(e) {}
+
+                calculateProfit(); 
             }
         }
     </script>
